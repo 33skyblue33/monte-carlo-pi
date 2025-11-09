@@ -1,64 +1,91 @@
-# Monte Carlo PI Estimation
+# Szacowanie liczby PI metodą Monte Carlo
 
-This project provides three different implementations of the Monte Carlo method for estimating the value of PI:
+Projekt ten dostarcza trzy różne implementacje metody Monte Carlo do szacowania wartości liczby PI:
 
-1.  **Sequential CPU:** A single-threaded implementation that runs on the CPU.
-2.  **Parallel CPU:** A multi-threaded implementation that leverages multiple CPU cores to speed up the estimation.
-3.  **Parallel GPU:** A massively parallel implementation that runs on the GPU using the Numba library for JIT compilation.
+1.  **Sekwencyjna na CPU:** Implementacja jednowątkowa, działająca na procesorze CPU.
+2.  **Równoległa na CPU:** Implementacja wielowątkowa, która wykorzystuje wiele rdzeni procesora, aby przyspieszyć obliczenia.
+3.  **Równoległa na GPU:** Masywnie równoległa implementacja, która działa na karcie graficznej (GPU) przy użyciu biblioteki **PyTorch**.
 
-## How it Works
+## Jak to działa?
 
-The Monte Carlo method for estimating PI is a probabilistic algorithm that relies on the principles of the Monte Carlo simulation. The basic idea is to inscribe a circle within a square and then randomly generate a large number of points within the square. The ratio of the number of points that fall inside the circle to the total number of points generated is approximately equal to the ratio of the area of the circle to the area of the square.
+Metoda Monte Carlo do szacowania PI to algorytm probabilistyczny oparty na symulacji. Główna idea polega na wpisaniu okręgu w kwadrat, a następnie wylosowaniu ogromnej liczby punktów wewnątrz tego kwadratu. Stosunek liczby punktów, które znalazły się wewnątrz okręgu, do całkowitej liczby wylosowanych punktów jest w przybliżeniu równy stosunkowi pola powierzchni okręgu do pola powierzchni kwadratu.
 
-Since the area of the circle is πr² and the area of the square is (2r)² = 4r², the ratio of the areas is πr² / 4r² = π/4. Therefore, we can estimate PI as:
+Ponieważ pole okręgu wynosi πr², a pole kwadratu (2r)² = 4r², stosunek pól wynosi πr² / 4r² = π/4. Dzięki temu możemy oszacować wartość PI jako:
 
-PI ≈ 4 * (number of points inside the circle) / (total number of points)
+**PI ≈ 4 \* (liczba punktów wewnątrz okręgu) / (całkowita liczba punktów)**
 
-## Setup
+## Instalacja
 
-1.  **Create a virtual environment:**
+Zdecydowanie zalecane jest użycie menedżera pakietów `conda`, ponieważ automatycznie zarządza on złożonymi zależnościami CUDA wymaganymi przez PyTorch.
+
+### Opcja 1: Środowisko dla CPU (bez wsparcia GPU)
+
+Jeśli chcesz uruchomić tylko wersje na CPU, możesz użyć prostszego środowiska.
+
+1.  **Utwórz środowisko wirtualne:**
     ```bash
-    python3 -m venv venv
+    python -m venv venv
     ```
-2.  **Activate the virtual environment:**
+2.  **Aktywuj środowisko:**
+    *   Windows:
+        ```bash
+        .\venv\Scripts\activate
+        ```
+    *   Linux/macOS:
+        ```bash
+        source venv/bin/activate
+        ```
+3.  **Zainstaluj zależności:**
     ```bash
-    source venv/bin/activate
+    pip install tqdm
     ```
-3.  **Install the required dependencies:**
+
+### Opcja 2: Środowisko dla GPU (z PyTorch - zalecane)
+
+To środowisko pozwoli na uruchomienie wszystkich trzech wersji algorytmu.
+
+1.  **Utwórz nowe środowisko `conda`:**
+    Poniższa komenda stworzy nowe środowisko o nazwie `torch_env` z odpowiednią wersją Pythona, PyTorch i narzędzi CUDA.
     ```bash
-    pip install -r requirements.txt
+    conda create --name torch_env python=3.11 pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+    ```
+2.  **Aktywuj środowisko `conda`:**
+    ```bash
+    conda activate torch_env
     ```
 
-## Running the Algorithms
+## Uruchamianie algorytmów
 
-The `main.py` script is the entry point for running all three algorithms. You can select the algorithm to run using the first positional argument.
+Główny skrypt `main.py` służy do uruchamiania wszystkich algorytmów. Wybierz algorytm, podając jego nazwę jako pierwszy argument.
 
-### Sequential CPU
-
-To run the sequential CPU implementation, use the `cpu` algorithm:
+### CPU sekwencyjny
 
 ```bash
-python3 main.py cpu --num_samples <number_of_samples>
+python main.py cpu --num_samples <liczba_próbek>
 ```
 
-### Parallel CPU
+### CPU równoległy
 
-To run the parallel CPU implementation, use the `cpu-parallel` algorithm. You can optionally specify the number of workers to use with the `--num_workers` flag. If not specified, the number of available CPU cores will be used.
+Możesz opcjonalnie podać liczbę procesów roboczych (`--num_workers`). Domyślnie używana jest liczba rdzeni procesora.
 
 ```bash
-python3 main.py cpu-parallel --num_samples <number_of_samples> --num_workers <number_of_workers>
+python main.py cpu-parallel --num_samples <liczba_próbek> --num_workers <liczba_procesów>
 ```
 
-### Parallel GPU
+### GPU równoległy (z PyTorch)
 
-To run the parallel GPU implementation, use the `gpu` algorithm. You can optionally specify the number of threads per block to use with the `--threads_per_block` flag.
+Możesz wybrać konkretne urządzenie GPU za pomocą flagi `--device`.
 
 ```bash
-python3 main.py gpu --num_samples <number_of_samples> --threads_per_block <threads_per_block>
+python main.py gpu --num_samples <liczba_próbek> --device <id_gpu>
 ```
 
-**Note:** If you do not have a CUDA-enabled GPU, you can still run the GPU implementation using the Numba CUDA simulator. To do this, set the `NUMBA_ENABLE_CUDASIM` environment variable to `1`:
+**Uwaga:** Argument `--threads_per_block` jest ignorowany w wersji z PyTorch, ale został zachowany dla spójności interfejsu.
+
+### Listowanie dostępnych GPU
+
+Aby wyświetlić listę dostępnych kart graficznych wykrytych przez PyTorch, użyj flagi `--list_gpus`.
 
 ```bash
-NUMBA_ENABLE_CUDASIM=1 python3 main.py gpu --num_samples <number_of_samples>
+python main.py --list_gpus
 ```
